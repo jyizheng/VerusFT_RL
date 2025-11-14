@@ -36,7 +36,7 @@ The goal of this project is to build and evaluate SFT pipelines that make models
 
 ## Motivation
 
-Formal verification in Verus embeds specifications, invariants, and proofs directly in Rust code. Systems like VeriStruct and VerusAgent show that LLMs can assist with specification and proof tasks, but current code models still:
+Formal verification in Verus embeds specifications, invariants, and proofs directly in Rust code. Systems like [VeriStruct](https://github.com/ChuyueSun/VeriStruct) and VerusAgent show that LLMs can assist with specification and proof tasks, but current code models still:
 
 - mis-handle Verus modes and ghost state,
 - omit or weaken specs,
@@ -61,7 +61,7 @@ We start from existing open-source Verus code, including:
 
 - the main Verus repo (examples, tests, verified libraries),
 - Verus-based projects listed on the [Verus publications/projects page](https://verus-lang.github.io/verus/publications-and-projects/), and
-- internal benchmarks and artifacts (e.g., VeriStruct data-structure modules).
+- internal benchmarks and artifacts (e.g., [VeriStruct](https://github.com/ChuyueSun/VeriStruct) data-structure modules).
 
 Large modules and full repos are too big for individual SFT samples. Instead, we use the existing **Verus minimizer** to turn big programs into small, self-contained examples.
 
@@ -130,7 +130,7 @@ Output: executable + ghost + proof code that verifies under Verus.
 Input: code + spec + Verus error message (or failing obligation info).
 Output: patched invariant, spec, or proof block that fixes the failure.
 
-Training is done in an instruction-style format compatible with downstream usage (e.g., VeriStruct pipeline prompts).
+Training is done in an instruction-style format compatible with downstream usage (e.g., [VeriStruct](https://github.com/ChuyueSun/VeriStruct) pipeline prompts).
 
 ### Phase 1: Evaluation
 
