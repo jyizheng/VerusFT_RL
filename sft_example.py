@@ -10,10 +10,10 @@ instruction→completion task).  The key steps are:
     (completion).  In a real project you would replace the examples below with
     your own curated data.
 
-2.  Load a pre‑trained model and tokenizer.  The example uses the Qwen3‑0.6B
-    model, but you can substitute any causal language model compatible with
-    Hugging Face transformers.  If you wish to use LoRA/QLoRA for parameter
-    efficient fine‑tuning, you can provide a `LoraConfig` (see below)【776457794560684†L111-L141】.
+2.  Load a pre‑trained model and tokenizer.  The example uses Qwen2.5-Coder-1.5B,
+    a code-specialized model, but you can substitute any causal language model
+    compatible with Hugging Face transformers.  If you wish to use LoRA for
+    parameter-efficient fine‑tuning, you can provide a `LoraConfig` (see below).
 
 3.  Construct an `SFTTrainer` with appropriate training arguments.  You can
     configure batch size, number of epochs, sequence length, learning rate,
@@ -85,17 +85,24 @@ def main():
     # Load your dataset
     train_dataset = build_dataset()
 
-    # Choose a base model.  gpt2 is used here for demonstration.
-    model_name = "gpt2"
+    # Choose a base model. Using Qwen2.5-Coder-7B - a larger code-specialized model
+    # that should have better performance on complex Verus code generation.
+    # Alternative options:
+    # - "Qwen/Qwen2.5-Coder-0.5B" (smaller, faster, less VRAM)
+    # - "Qwen/Qwen2.5-Coder-1.5B" (balanced performance and speed)
+    # - "Qwen/Qwen2.5-Coder-3B" (good quality, moderate VRAM)
+    # - "Qwen/Qwen2.5-Coder-14B" (very high quality, requires 32GB+ VRAM)
+    # - "Qwen/Qwen2.5-Coder-32B" (best quality, requires 80GB+ VRAM)
+    model_name = "Qwen/Qwen2.5-Coder-7B"
 
     # Load tokenizer and model.  Use ``tokenizer`` to map strings to token
     # sequences and ``model`` to initialize the pre‑trained weights.
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    
-    # Set pad token for GPT-2 which doesn't have one by default
+
+    # Set pad token if not already set (Qwen models typically have this configured)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    
+
     model = AutoModelForCausalLM.from_pretrained(model_name)
     model.config.pad_token_id = tokenizer.pad_token_id
 
@@ -118,13 +125,19 @@ def main():
 
     # Optionally configure LoRA for parameter‑efficient fine‑tuning.  If you
     # provide a LoraConfig, only the adapter weights will be updated.  This
-    # reduces memory usage and speeds up training on consumer GPUs【776457794560684†L111-L141】.
+    # reduces memory usage and speeds up training on consumer GPUs.
+    #
+    # NOTE: Qwen2.5 uses different layer names than GPT-2:
+    # - GPT-2 uses: ["c_attn", "c_proj"]
+    # - Qwen2.5 uses: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+    # For most efficient training, we target the attention layers (q, k, v, o).
+    # For more capacity, you can add MLP layers (gate, up, down).
     lora_config = None
     if LoraConfig is not None:
         lora_config = LoraConfig(
-            r=16,  # Increased rank for more capacity
-            lora_alpha=32,  # Scaled with r
-            target_modules=["c_attn", "c_proj"],  # Target both attention and projection layers
+            r=16,  # Rank - controls adapter capacity (higher = more parameters)
+            lora_alpha=32,  # Scaling factor (typically 2x rank)
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # Qwen2.5 attention layers
             lora_dropout=0.05,
             bias="none",
             task_type="CAUSAL_LM",
