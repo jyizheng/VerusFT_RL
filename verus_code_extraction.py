@@ -45,6 +45,7 @@ class ExtractionResult:
             "source_path": str(self.source_path),
             "status": self.status,
             "message": self.message,
+            "code": self.code,
             "dependencies": self.dependencies,
             "verify_time_ms": self.verify_time_ms,
         }
